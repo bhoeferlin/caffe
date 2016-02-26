@@ -12,6 +12,10 @@
 #include "caffe/caffe.hpp"
 #include "caffe/parallel.hpp"
 
+#ifdef _MSC_VER
+#   include "caffe/compatibility_helper.h"
+#endif
+
 namespace caffe {
 
 enum Op {
@@ -119,7 +123,7 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
   vector<int> remaining(devices);
 
   // Depth for reduction tree
-  int remaining_depth = static_cast<int>(ceil(log2(remaining.size())));
+  int remaining_depth = static_cast<int>(ceil(log((double)remaining.size())/log(2.0)));
 
   // Group GPUs by board
   for (int d = 0; d < remaining_depth; ++d) {
@@ -146,7 +150,7 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
   DLOG(INFO) << "GPUs paired by boards, remaining: " << s.str();
 
   // Group by P2P accessibility
-  remaining_depth = ceil(log2(remaining.size()));
+  remaining_depth = ceil(log((double)remaining.size())/log(2.0));
   for (int d = 0; d < remaining_depth; ++d) {
     for (int i = 0; i < remaining.size(); ++i) {
       for (int j = i + 1; j < remaining.size(); ++j) {
@@ -169,7 +173,7 @@ void DevicePair::compute(const vector<int> devices, vector<DevicePair>* pairs) {
   DLOG(INFO) << "GPUs paired by P2P access, remaining: " << s.str();
 
   // Group remaining
-  remaining_depth = ceil(log2(remaining.size()));
+  remaining_depth = ceil(log((double)remaining.size())/log(2.0));
   for (int d = 0; d < remaining_depth; ++d) {
     for (int i = 0; i < remaining.size(); ++i) {
       pairs->push_back(DevicePair(remaining[i], remaining[i + 1]));

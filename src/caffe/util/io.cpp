@@ -21,6 +21,12 @@
 
 const int kProtoReadBytesLimit = INT_MAX;  // Max size of 2 GB minus 1 byte.
 
+// port for Win32 
+#ifdef _MSC_VER 
+#include <io.h>
+#   define open _open 
+#endif
+
 namespace caffe {
 
 using google::protobuf::io::FileInputStream;
@@ -37,7 +43,7 @@ bool ReadProtoFromTextFile(const char* filename, Message* proto) {
   FileInputStream* input = new FileInputStream(fd);
   bool success = google::protobuf::TextFormat::Parse(input, proto);
   delete input;
-  close(fd);
+  _close(fd);
   return success;
 }
 
@@ -46,11 +52,11 @@ void WriteProtoToTextFile(const Message& proto, const char* filename) {
   FileOutputStream* output = new FileOutputStream(fd);
   CHECK(google::protobuf::TextFormat::Print(proto, output));
   delete output;
-  close(fd);
+  _close(fd);
 }
 
 bool ReadProtoFromBinaryFile(const char* filename, Message* proto) {
-  int fd = open(filename, O_RDONLY);
+  int fd = open(filename, O_RDONLY | O_BINARY);
   CHECK_NE(fd, -1) << "File not found: " << filename;
   ZeroCopyInputStream* raw_input = new FileInputStream(fd);
   CodedInputStream* coded_input = new CodedInputStream(raw_input);
@@ -60,7 +66,7 @@ bool ReadProtoFromBinaryFile(const char* filename, Message* proto) {
 
   delete coded_input;
   delete raw_input;
-  close(fd);
+  _close(fd);
   return success;
 }
 

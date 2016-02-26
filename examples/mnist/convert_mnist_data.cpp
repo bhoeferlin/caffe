@@ -25,6 +25,12 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/format.hpp"
 
+#ifdef _MSC_VER
+#include <direct.h>
+#include <windows.h>
+#define snprintf sprintf_s
+#endif
+
 #if defined(USE_LEVELDB) && defined(USE_LMDB)
 
 using namespace caffe;  // NOLINT(build/namespaces)
@@ -68,12 +74,12 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   cols = swap_endian(cols);
 
   // lmdb
-  MDB_env *mdb_env;
+  MDB_env *mdb_env = NULL;
   MDB_dbi mdb_dbi;
   MDB_val mdb_key, mdb_data;
-  MDB_txn *mdb_txn;
+  MDB_txn *mdb_txn = NULL;
   // leveldb
-  leveldb::DB* db;
+  leveldb::DB* db = NULL;
   leveldb::Options options;
   options.error_if_exists = true;
   options.create_if_missing = true;
@@ -90,11 +96,24 @@ void convert_dataset(const char* image_filename, const char* label_filename,
     batch = new leveldb::WriteBatch();
   } else if (db_backend == "lmdb") {  // lmdb
     LOG(INFO) << "Opening lmdb " << db_path;
+#ifndef _MSC_VER
     CHECK_EQ(mkdir(db_path, 0744), 0)
         << "mkdir " << db_path << "failed";
+#else
+	CHECK_EQ(_mkdir(db_path), 0)
+		<< "mkdir " << db_path << "failed";
+#endif
     CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
+#ifdef _MSC_VER
+    SYSTEM_INFO si;
+    GetNativeSystemInfo(&si);
+    const size_t mapSize = static_cast<size_t>(si.dwPageSize) * 10000000;  // 40GB
+    CHECK_EQ(mdb_env_set_mapsize(mdb_env, mapSize), MDB_SUCCESS)
+        << "mdb_env_set_mapsize failed";
+#else
     CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS)  // 1TB
         << "mdb_env_set_mapsize failed";
+#endif
     CHECK_EQ(mdb_env_open(mdb_env, db_path, 0, 0664), MDB_SUCCESS)
         << "mdb_env_open failed";
     CHECK_EQ(mdb_txn_begin(mdb_env, NULL, 0, &mdb_txn), MDB_SUCCESS)
@@ -170,6 +189,15 @@ void convert_dataset(const char* image_filename, const char* label_filename,
     }
     LOG(ERROR) << "Processed " << count << " files.";
   }
+#ifdef _MSC_VER
+  else {
+    if (db_backend == "lmdb") {
+      mdb_close(mdb_env, mdb_dbi);
+      mdb_env_close(mdb_env);
+    }
+    LOG(ERROR) << "Processed " << count << " files.";
+  }
+#endif
   delete[] pixels;
 }
 

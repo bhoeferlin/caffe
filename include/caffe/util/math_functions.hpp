@@ -10,6 +10,8 @@
 #include "caffe/util/device_alternate.hpp"
 #include "caffe/util/mkl_alternate.hpp"
 
+#include "caffe/compatibility_helper.h"
+
 namespace caffe {
 
 // Caffe gemm provides a simpler interface to the gemm functions, with the

@@ -17,7 +17,7 @@ template <typename Dtype>
 LayerParameter SPPLayer<Dtype>::GetPoolingParam(const int pyramid_level,
       const int bottom_h, const int bottom_w, const SPPParameter spp_param) {
   LayerParameter pooling_param;
-  int num_bins = pow(2, pyramid_level);
+  int num_bins = std::pow(2.f, pyramid_level);
 
   // find padding and kernel size so that the pooling is
   // performed across the entire image

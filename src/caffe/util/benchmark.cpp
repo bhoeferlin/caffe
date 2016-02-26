@@ -100,8 +100,9 @@ float Timer::MilliSeconds() {
   return elapsed_milliseconds_;
 }
 
-float Timer::Seconds() {
-  return MilliSeconds() / 1000.;
+float Timer::Seconds() 
+{
+    return MilliSeconds() / 1000.f;
 }
 
 void Timer::Init() {

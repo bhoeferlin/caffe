@@ -81,8 +81,10 @@ using boost::shared_ptr;
 // Common functions and classes from std that caffe often uses.
 using std::fstream;
 using std::ios;
+#if _MSC_VER > 1600
 using std::isnan;
 using std::isinf;
+#endif
 using std::iterator;
 using std::make_pair;
 using std::map;
