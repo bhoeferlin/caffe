@@ -104,7 +104,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(OPENCVDIR_3_0)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\debug;..\3rdparty\gflags\lib\debug;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(OPENCVDIR_3_0)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\debug;..\3rdparty\gflags\lib\debug;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;..\3rdparty\lmdb\lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart.lib;cuda.lib;nppi.lib;cufft.lib;cublas.lib;curand.lib;libopenblas.lib;libhdf5.lib;libhdf5_cpp.lib;libhdf5_hl.lib;libhdf5_hl_cpp.lib;libhdf5_tools.lib;libglog_static.lib;shlwapi.lib;gflags.lib;lmdb.lib;libprotobufd.lib;libprotocd.lib;opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_imgcodecs300d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <CustomBuildStep>
       <Command>../scripts/GeneratePB.bat</Command>

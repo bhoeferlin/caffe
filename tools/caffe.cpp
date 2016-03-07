@@ -3,6 +3,8 @@
 namespace bp = boost::python;
 #endif
 
+// caffe train --solver="C:/projects/dnn/models/refnet_refine_short/solver_gpu.prototxt"
+
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 

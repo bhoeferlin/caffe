@@ -2,6 +2,8 @@
 
 
 
+#include <boost/filesystem.hpp>
+#include <fstream>
 
 using namespace caffe;  
 using namespace std;
@@ -150,7 +152,7 @@ cv::Scalar Classifier::GetMean( const string& mean_file, const unsigned int& num
   
 void Classifier::createMeanImage( const cv::Scalar& channel_mean )
 {
-     m_mean = cv::Mat( m_input_geometry, /*mean.type()*/ CV_32F, channel_mean );
+     m_mean = cv::Mat( m_input_geometry, /*mean.type()*/ CV_32FC3, channel_mean );
 }
 
 
@@ -196,7 +198,6 @@ void Classifier::wrapInputLayer( std::vector< cv::Mat >* input_channels)
 }
 
 
-
 void Classifier::preprocess( const cv::Mat& img,
                              std::vector<cv::Mat>* input_channels) 
 {
@@ -224,11 +225,18 @@ void Classifier::preprocess( const cv::Mat& img,
     }
 
     cv::Mat sample_float;
-    if (m_num_channels == 3)
-        sample_resized.convertTo(sample_float, CV_32FC3);
+    if( sample_resized.depth() != CV_32F )
+    {
+        if (m_num_channels == 3)
+            sample_resized.convertTo(sample_float, CV_32FC3);
+        else
+            sample_resized.convertTo(sample_float, CV_32FC1);
+    }
     else
-        sample_resized.convertTo(sample_float, CV_32FC1);
-    
+    {
+        sample_float = sample_resized;
+    }
+
     cv::Mat sample_normalized;
     cv::subtract( sample_float, m_mean, sample_normalized );
 
