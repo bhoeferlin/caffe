@@ -13,10 +13,10 @@
 #include <caffe/caffe.hpp>
 
 /*
-#pragma comment(lib, "opencv_core300.lib")
-#pragma comment(lib, "opencv_highgui300.lib")
-#pragma comment(lib, "opencv_imgproc300.lib")
-#pragma comment(lib, "opencv_imgcodecs300.lib")
+#pragma comment(lib, "opencv_core310.lib")
+#pragma comment(lib, "opencv_highgui310.lib")
+#pragma comment(lib, "opencv_imgproc310.lib")
+#pragma comment(lib, "opencv_imgcodecs310.lib")
 */
 
 #pragma comment(lib, "cudart.lib")
@@ -50,6 +50,7 @@ typedef std::pair< int, float > Prediction;
 class Classifier 
 {
 public:
+
     Classifier( bool useGPU, 
                 const std::string& model_file,
                 const std::string& trained_file,
@@ -67,6 +68,10 @@ public:
 
     // Load the mean file in binaryproto format.
     static cv::Scalar GetMean( const std::string& mean_file, const unsigned int& num_channels );
+
+
+    static bool GoogleLoggingInitialized;
+    static bool InitializeGoogleLogging();
 
 private:
 

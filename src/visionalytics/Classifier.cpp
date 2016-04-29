@@ -1,12 +1,20 @@
 #include <visionalytics/classifier.h>
 
-
-
 #include <boost/filesystem.hpp>
 #include <fstream>
 
 using namespace caffe;  
 using namespace std;
+
+
+bool Classifier::GoogleLoggingInitialized = Classifier::InitializeGoogleLogging();
+
+
+bool Classifier::InitializeGoogleLogging()
+{
+    ::google::InitGoogleLogging("CaffeClassifier");
+    return true;
+}
 
 
 Classifier::Classifier( bool useGPU, 
@@ -41,8 +49,6 @@ void Classifier::init( bool useGPU,
             const std::string& trained_file,
             const std::vector< int >& outputLabelAssignment )
 {
-    ::google::InitGoogleLogging("CaffeClassifier");
-
     if( useGPU )
     {
         Caffe::set_mode(Caffe::GPU);
@@ -131,7 +137,7 @@ cv::Scalar Classifier::GetMean( const string& mean_file, const unsigned int& num
     // The format of the mean file is planar 32-bit float BGR or grayscale. 
     std::vector<cv::Mat> channels;
     float* data = mean_blob.mutable_cpu_data();
-    for (int i = 0; i < num_channels; ++i) 
+    for( unsigned int i = 0; i < num_channels; ++i ) 
     {
         // Extract an individual channel. 
         cv::Mat channel( mean_blob.height(), mean_blob.width(), CV_32FC1, data );
