@@ -410,6 +410,15 @@ void Solver<Dtype>::Test(const int test_net_id) {
     }
     LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
               << mean_score << loss_msg_stream.str();
+ 
+    static float BestAccuracy = 0.0;
+    if( output_name == "accuracy_snapshot" && mean_score > BestAccuracy )
+    {
+        BestAccuracy = mean_score;
+	LOG(INFO) << "    --> Snapshot due to max accuracy!"; 
+        Snapshot();
+    }
+
   }
 }
 
