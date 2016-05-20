@@ -10,7 +10,7 @@
 
 namespace caffe { namespace db {
 
-<<<<<<< HEAD
+
 #ifdef _MSC_VER
 // On Windows lmdb creates file with the full size causing test failures due
 // to insufficient disk space. We will reduce lmdb size to make tests pass.
@@ -33,12 +33,6 @@ void LMDB::Open(const string& source, Mode mode) {
 #else
     CHECK_EQ(mkdir(source.c_str(), 0744), 0) << "mkdir " << source << "failed";
 #endif
-=======
-void LMDB::Open(const string& source, Mode mode) {
-  MDB_CHECK(mdb_env_create(&mdb_env_));
-  if (mode == NEW) {
-    CHECK_EQ(mkdir(source.c_str(), 0744), 0) << "mkdir " << source << " failed";
->>>>>>> upstream/master
   }
   int flags = 0;
   if (mode == READ) 
