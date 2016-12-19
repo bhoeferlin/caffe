@@ -1,11 +1,18 @@
 #include <visionalytics/classifier.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include <fstream>
 
 using namespace caffe;  
 using namespace std;
 
+
+    const std::string Classifier::RETRAIN_SNAPSHOTPATH_PLACEHOLDER = "%retrainSnapshotPath%";
+    const std::string Classifier::RETRAIN_MODELPATH_PLACEHOLDER = "%retrainModelPath%";
+    const std::string Classifier::RETRAIN_TRAINDATAPATH_PLACEHOLDER = "%trainAnnotationPath%"; 
+    const std::string Classifier::RETRAIN_VALIDDATAPATH_PLACEHOLDER = "%validAnnotationPath%";
 
 bool Classifier::GoogleLoggingInitialized = Classifier::InitializeGoogleLogging();
 
@@ -110,7 +117,7 @@ std::vector<Prediction> Classifier::classify(const cv::Mat& img, int n)
 {
     std::vector<float> output = predict(img);
 
-    n = std::min<int>( m_outputLabelAssignment.size(), n );
+    n = std::min<int>( static_cast<int>( m_outputLabelAssignment.size() ), n );
     std::vector<int> maxN = Argmax(output, n);
     std::vector<Prediction> predictions;
     for (int i = 0; i < n; ++i) 
@@ -256,3 +263,316 @@ void Classifier::preprocess( const cv::Mat& img,
     << "Input channels are not wrapping the input layer of the network.";
 }
 
+
+
+    
+void Classifier::retrain( const cv::Ptr< cv::ml::TrainData >& trainingAndValidationData, 
+                          const cv::Size2i& imgDimensions,
+                          unsigned int numberOfTrainIterations, 
+                          std::function<void(float)> progressUpdate,
+                          std::function<void(unsigned int, float, float, const std::string&)> snapshotUpdate,
+                          const std::string& solver_file,
+                          const std::string& model_file,
+                          const std::string& trained_file,
+                          const std::string& folderToStoreData )
+{
+    const bool useGPUForTrain = false;
+
+    cv::Mat trainSamples = trainingAndValidationData->getTrainSamples();
+    cv::Mat validSamples = trainingAndValidationData->getTestSamples();
+
+    cv::Mat trainLabels = trainingAndValidationData->getTrainResponses();
+    cv::Mat validLabels = trainingAndValidationData->getTestResponses();
+
+
+    // Create inverse label assignment
+    cv::Mat classLabels = trainingAndValidationData->getClassLabels();
+    double minV, maxV;
+    cv::minMaxLoc(classLabels, &minV, &maxV);
+    int maxLabelID = static_cast<int>( maxV );
+    for( int i = 0; i < m_outputLabelAssignment.size(); ++i )
+    {
+        maxLabelID = max( maxLabelID, m_outputLabelAssignment.at( i ) );
+    }
+
+    std::vector< int > inverseLabelAssignment;
+    inverseLabelAssignment.resize( maxLabelID + 1, -1 );
+    for( int i = 0; i < m_outputLabelAssignment.size(); ++i )
+    {
+        inverseLabelAssignment.at( m_outputLabelAssignment.at( i ) ) = i;
+    }
+    
+
+    // Prepare the training and validation datasets
+    std::string baseFolder = folderToStoreData;
+    if( baseFolder.empty() )
+    {
+        baseFolder = "c:/tmp_train";
+    }
+
+    boost::system::error_code dirError;
+    CHECK( boost::filesystem::create_directory( baseFolder + "/train_data/", dirError ) ) <<
+        "Cannot create temporary train_data path due to error " << dirError;
+    CHECK( boost::filesystem::create_directory( baseFolder + "/valid_data/", dirError ) ) <<
+        "Cannot create temporary valid_data path due to error " << dirError;        
+
+    for( int testValidCycle = 0; testValidCycle < 2; ++testValidCycle )
+    {
+        cv::Mat& samples = trainSamples;
+        cv::Mat& responses = trainLabels;
+        std::string annotationFilename;
+        std::string dataPlaceholder;
+        FILE* annotationsFile; 
+
+        switch( testValidCycle )
+        {
+        case 0: // train
+            samples = trainSamples;
+            responses = trainLabels;
+            annotationFilename = baseFolder + "/train_annotations.txt";
+            dataPlaceholder = Classifier::RETRAIN_TRAINDATAPATH_PLACEHOLDER;
+            break;
+        case 1: // valid
+            samples = validSamples;
+            responses = validLabels;
+            annotationFilename = baseFolder + "/valid_annotations.txt";
+            dataPlaceholder = Classifier::RETRAIN_VALIDDATAPATH_PLACEHOLDER;
+            break;
+        }
+
+        // Generate shuffled data indices
+        std::vector<int> shuffledIndex;
+        shuffledIndex.reserve( samples.rows );
+        for( int i = 0; i < samples.rows; ++i )
+        {
+	        shuffledIndex.push_back( i );
+        }
+        random_shuffle( shuffledIndex.begin(), shuffledIndex.end() );
+
+
+        // Write train and validation datasets
+        annotationsFile = fopen( annotationFilename.c_str(), "w" );
+        if( !annotationsFile )
+        {
+            assert( false );
+            return;
+        }
+
+        for( int i = 0; i < samples.rows; ++i )
+        {
+            char tmpBuffer[256];
+            cv::Mat sample = samples.row( shuffledIndex.at( i ) );
+            cv::Mat response = responses.row( shuffledIndex.at( i ) );
+
+            int classResponse;
+            if( inverseLabelAssignment.size() > (int)response.at<float>(0,0) && 
+                inverseLabelAssignment.at( (int)response.at<float>(0,0) ) < 0 )
+            {
+                assert( false );
+                return;
+            }
+            else
+            {
+                classResponse = inverseLabelAssignment.at( (int)response.at<float>(0,0) );
+            }
+
+
+            std::string imgFilename;
+            if( testValidCycle == 0 )
+            {
+                imgFilename = baseFolder + "/train_data/" + std::string( _itoa( i, tmpBuffer, 10 ) ) + ".png";
+            }
+            else
+            {
+                assert( testValidCycle == 1 );
+                imgFilename = baseFolder + "/valid_data/" + std::string( _itoa( i, tmpBuffer, 10 ) ) + ".png";
+            }
+
+            // prepare train features
+            assert( sample.cols == imgDimensions.width * imgDimensions.height * 3 );
+		    cv::Mat reshapedSample = sample.reshape( 3, imgDimensions.height );    
+
+            // store sample
+            if( !cv::imwrite( imgFilename, reshapedSample ) )
+            {
+                assert( false );
+                return;
+            }
+
+            fprintf( annotationsFile, "%s %d\n", imgFilename.c_str(), classResponse );
+        }
+
+        fclose( annotationsFile );
+
+        // Replace annotation data placeholder in retrain model file
+        ReplaceAllPlaceholdersInTextFile( model_file, dataPlaceholder, annotationFilename );
+    }
+
+
+    // Replace placeholdera in retrain solver file
+    ReplaceAllPlaceholdersInTextFile( solver_file, Classifier::RETRAIN_MODELPATH_PLACEHOLDER, model_file );
+    ReplaceAllPlaceholdersInTextFile( solver_file, Classifier::RETRAIN_SNAPSHOTPATH_PLACEHOLDER, folderToStoreData + "/snapshot" );
+
+
+    // Init solver parameters
+    caffe::SolverParameter solver_param;
+    caffe::ReadSolverParamsFromTextFileOrDie( solver_file, &solver_param );
+
+    // Set snapshot props
+    solver_param.set_snapshot_after_train( true );
+    solver_param.set_snapshot_format( caffe::SolverParameter_SnapshotFormat_BINARYPROTO );
+
+    // Display props
+    solver_param.set_display( false );
+    solver_param.set_debug_info( false );
+
+    
+
+    // Set GPU devices for training
+    std::vector< int > gpus;
+    if( useGPUForTrain )
+    {
+        std::string useGPUs = "all";
+
+        // Set the mode and device to be set from the solver prototxt.
+        if( solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU ) 
+        {
+            if( solver_param.has_device_id() ) 
+            {
+                useGPUs = boost::lexical_cast<std::string>(solver_param.device_id());
+            } 
+            else 
+            {  // Set default GPU if unspecified
+                useGPUs = "0";
+            }
+        }
+
+        // Determine which devices are available
+        if (useGPUs == "all") 
+        {
+            int count = 0;
+            CUDA_CHECK( cudaGetDeviceCount( &count ) );
+            for( int i = 0; i < count; ++i ) 
+            {
+                gpus.push_back( i );
+            }
+        } 
+        else if( useGPUs.size() ) 
+        {
+            vector<string> strings;
+            boost::split( strings, useGPUs, boost::is_any_of(",") );
+            for (int i = 0; i < strings.size(); ++i) 
+            {
+                gpus.push_back(boost::lexical_cast<int>(strings[i]));
+            }
+        } 
+
+        if( gpus.size() == 0 ) 
+        {
+            LOG(INFO) << "Use CPU.";
+            Caffe::set_mode( Caffe::CPU );
+        } 
+        else 
+        {
+            ostringstream s;
+            for (int i = 0; i < gpus.size(); ++i) 
+            {
+                s << (i ? ", " : "") << gpus[i];
+            }
+            LOG(INFO) << "Using GPUs " << s.str();
+
+            cudaDeviceProp device_prop;
+            for( int i = 0; i < gpus.size(); ++i ) 
+            {
+                cudaGetDeviceProperties( &device_prop, gpus[i] );
+                LOG(INFO) << "GPU " << gpus[i] << ": " << device_prop.name;
+            }
+
+            solver_param.set_device_id( gpus[0] );
+            Caffe::SetDevice( gpus[0] );
+            Caffe::set_mode( Caffe::GPU );
+            Caffe::set_solver_count( static_cast<int>( gpus.size() ) );
+        }
+    }
+
+
+    // Create solver
+    boost::shared_ptr<caffe::Solver<float> > solver( caffe::SolverRegistry<float>::CreateSolver( solver_param ) );
+    solver->net()->CopyTrainedLayersFrom( trained_file );
+    for( int j = 0; j < solver->test_nets().size(); ++j ) 
+    {
+        solver->test_nets()[j]->CopyTrainedLayersFrom( trained_file );
+    }
+  
+    // Add callbacks
+    SolverCallback<float> callbackClass( this, progressUpdate, snapshotUpdate );
+    solver->add_callback( &callbackClass );
+           
+
+    /*
+    caffe::SignalHandler signal_handler(
+    GetRequestedAction(FLAGS_sigint_effect),
+    GetRequestedAction(FLAGS_sighup_effect));
+    solver->SetActionFunction(signal_handler.GetActionFunction());
+    */
+
+
+    if( gpus.size() > 1 ) 
+    {
+        caffe::P2PSync<float> sync( solver, NULL, solver->param() );
+        sync.Run(gpus);
+    } 
+    else 
+    {
+        LOG(INFO) << "Starting Optimization";
+        solver->Solve(); // TODO - get Feedback on snapshots and performance
+    }
+
+    LOG(INFO) << "Optimization Done.";
+
+}
+
+
+
+    
+unsigned int Classifier::ReplaceAllPlaceholdersInTextFile( const std::string& filename, const std::string& from, const std::string& to )
+{
+    unsigned int replacedOccurrences = 0;
+    FILE* replaceFile; 
+    replaceFile = fopen( filename.c_str(), "rb+" );
+
+    // check how many characters are there in the file
+    fseek( replaceFile, 0, SEEK_END );
+    long fsize = ftell( replaceFile );
+    fseek( replaceFile, 0, SEEK_SET ); 
+
+    if( fsize == 0 )
+    {
+        fclose( replaceFile );
+        return replacedOccurrences;
+    }
+
+    // read all characters and append null termination
+    char* fileContent = new char[ fsize + 1 ];
+    fread( fileContent, fsize, 1, replaceFile );
+    fileContent[ fsize ] = '\0';
+
+    // convert to c++ string and replace all occurences of "from" with "to"
+    std::string content = std::string( fileContent );
+
+    size_t start_pos = 0;
+    while( ( start_pos = content.find( from, start_pos ) ) != std::string::npos ) 
+    {
+        content.replace( start_pos, from.length(), to );
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+        ++replacedOccurrences;
+    }
+
+    // write back the modified content
+    fseek( replaceFile, 0, SEEK_SET ); 
+    fwrite( content.c_str() , sizeof(char), content.length(), replaceFile);
+
+    fclose( replaceFile );
+
+    return replacedOccurrences;
+}

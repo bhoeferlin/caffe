@@ -99,15 +99,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;USE_OPENCV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS -D GOOGLE_GLOG_DLL_DECL= %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <CallingConvention>Cdecl</CallingConvention>
-      <AdditionalIncludeDirectories>..\src;..\include;$(CUDA_PATH_V7_5)\include;$(OPENCVDIR_3_1)\include;$(OPENCVDIR_3_1)\include\opencv;$(BOOST_160_PATH);..\3rdparty\openblas\include;..\3rdparty\glog\include;..\3rdparty\gflags\include;..\3rdparty\protobuf\include;..\3rdparty\hdf5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src;..\include;$(CUDA_PATH_V7_5)\include;$(CUDNN_PATH)\include;$(OPENCVDIR_3_1)\include;$(OPENCVDIR_3_1)\include\opencv;$(BOOST_160_PATH);..\3rdparty\openblas\include;..\3rdparty\glog\include;..\3rdparty\gflags\include;..\3rdparty\protobuf\include;..\3rdparty\hdf5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <OpenMPSupport>false</OpenMPSupport>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -116,7 +117,7 @@
       <AdditionalLibraryDirectories>$(OPENCVDIR_3_0)\x64\vc10\lib\;C:\libs\boost\boost_1_60_0\stage\lib;C:\libs\hdf5\hdf5-1.8.16\build_msvc2010_x64\HDF5-1.8.16-win64\lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64;C:\libs\glog\Release;C:\libs\gflags\build_msvs2010_x64\lib\Release;C:\libs\protobuf\cmake\build\release;C:\libs\openblas\OpenBLAS-v0.2.15-Win64-int32\lib;C:\libs\openblas\OpenBLAS\build_x64_msvc2010\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(OPENCVDIR_3_1)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\debug;..\3rdparty\gflags\lib\debug;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(CUDNN_PATH)\lib\x64;$(OPENCVDIR_3_1)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\debug;..\3rdparty\gflags\lib\debug;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <CustomBuildStep>
@@ -145,9 +146,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;USE_OPENCV;USE_CUDNN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>..\src;..\include;$(CUDA_PATH_V7_5)\include;$(OPENCVDIR_3_1)\include;$(OPENCVDIR_3_1)\include\opencv;$(BOOST_160_PATH);..\3rdparty\openblas\include;..\3rdparty\glog\include;..\3rdparty\gflags\include;..\3rdparty\protobuf\include;..\3rdparty\hdf5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src;..\include;$(CUDA_PATH_V7_5)\include;$(CUDNN_PATH)\include;$(OPENCVDIR_3_1)\include;$(OPENCVDIR_3_1)\include\opencv;$(BOOST_160_PATH);..\3rdparty\openblas\include;..\3rdparty\glog\include;..\3rdparty\gflags\include;..\3rdparty\protobuf\include;..\3rdparty\hdf5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeaderFile>
@@ -162,7 +163,7 @@
       </AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(OPENCVDIR_3_1)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\release;..\3rdparty\gflags\lib\release;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V7_5)\lib\x64;$(CUDNN_PATH)\lib\x64;$(OPENCVDIR_3_1)\x64\vc10\lib\;$(BOOST_160_PATH)\stage\lib;..\3rdparty\hdf5\lib;..\3rdparty\glog\lib\release;..\3rdparty\gflags\lib\release;..\3rdparty\protobuf\lib;..\3rdparty\openblas\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <CustomBuildStep>
@@ -223,6 +224,7 @@
     <ClCompile Include="..\src\caffe\layers\image_data_layer.cpp" />
     <ClCompile Include="..\src\caffe\layers\infogain_loss_layer.cpp" />
     <ClCompile Include="..\src\caffe\layers\inner_product_layer.cpp" />
+    <ClCompile Include="..\src\caffe\layers\input_layer.cpp" />
     <ClCompile Include="..\src\caffe\layers\log_layer.cpp" />
     <ClCompile Include="..\src\caffe\layers\loss_layer.cpp" />
     <ClCompile Include="..\src\caffe\layers\lrn_layer.cpp" />

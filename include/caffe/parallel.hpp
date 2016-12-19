@@ -101,6 +101,8 @@ class P2PSync : public GPUParams<Dtype>, public Solver<Dtype>::Callback,
  protected:
   void on_start();
   void on_gradients_ready();
+  void on_iteration_finished( float progress ) { /* nothing to do here - callbacks for Visionalytics use only */ };
+  void on_snapshot_saved( unsigned int iteration, float loss, float accuracy, const std::string& filename ) { /* nothing to do here - callbacks for Visionalytics use only */ };
 
   void InternalThreadEntry();
 

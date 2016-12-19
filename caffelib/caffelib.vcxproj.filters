@@ -315,6 +315,9 @@
     <ClCompile Include="..\src\visionalytics\Classifier.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\caffe\layers\input_layer.cpp">
+      <Filter>Quelldateien\layers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\src\caffe\layers\absval_layer.cu">

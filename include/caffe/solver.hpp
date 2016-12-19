@@ -65,7 +65,7 @@ class Solver {
   // that stores the learned net. You should implement the SnapshotSolverState()
   // function that produces a SolverState protocol buffer that needs to be
   // written to disk together with the learned net.
-  void Snapshot();
+  void Snapshot( float loss = -1, float accuracy = -1 );
   virtual ~Solver() {}
   inline const SolverParameter& param() const { return param_; }
   inline shared_ptr<Net<Dtype> > net() { return net_; }
@@ -79,6 +79,8 @@ class Solver {
    protected:
     virtual void on_start() = 0;
     virtual void on_gradients_ready() = 0;
+    virtual void on_iteration_finished( float progress ) = 0;
+    virtual void on_snapshot_saved( unsigned int iteration, float loss, float accuracy, const std::string& filename ) = 0;
 
     template <typename T>
     friend class Solver;

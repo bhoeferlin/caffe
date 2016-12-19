@@ -229,17 +229,19 @@ void Solver<Dtype>::Step(int iters) {
     loss /= param_.iter_size();
     // average the loss across iterations for smoothed reporting
     UpdateSmoothedLoss(loss, start_iter, average_loss);
+
     if (display) {
       LOG_IF(INFO, Caffe::root_solver()) << "Iteration " << iter_
           << ", loss = " << smoothed_loss_;
       const vector<Blob<Dtype>*>& result = net_->output_blobs();
       int score_index = 0;
-      for (int j = 0; j < result.size(); ++j) {
+      for (int j = 0; j < result.size(); ++j) 
+      {
+        const Dtype loss_weight =
+            net_->blob_loss_weights()[net_->output_blob_indices()[j]];
         const Dtype* result_vec = result[j]->cpu_data();
         const string& output_name =
             net_->blob_names()[net_->output_blob_indices()[j]];
-        const Dtype loss_weight =
-            net_->blob_loss_weights()[net_->output_blob_indices()[j]];
         for (int k = 0; k < result[j]->count(); ++k) {
           ostringstream loss_msg_stream;
           if (loss_weight) {
@@ -268,12 +270,17 @@ void Solver<Dtype>::Step(int iters) {
          && iter_ % param_.snapshot() == 0
          && Caffe::root_solver()) ||
          (request == SolverAction::SNAPSHOT)) {
-      Snapshot();
+      Snapshot( net_->blob_loss_weights()[net_->output_blob_indices()[0]] );
     }
     if (SolverAction::STOP == request) {
       requested_early_exit_ = true;
       // Break out of training loop.
       break;
+    }
+
+    for (int i = 0; i < callbacks_.size(); ++i) 
+    {
+      callbacks_[i]->on_iteration_finished( (iter_-start_iter) / ((float)(stop_iter-start_iter)) );
     }
   }
 }
@@ -410,32 +417,39 @@ void Solver<Dtype>::Test(const int test_net_id) {
               << mean_score << loss_msg_stream.str();
  
     static float BestAccuracy = 0.0;
-    if( output_name == "accuracy_snapshot" && mean_score > BestAccuracy )
+    if( output_name == "accuracy_snapshot" && ( mean_score > BestAccuracy || iter_ == 0 ) )
     {
         BestAccuracy = mean_score;
-	LOG(INFO) << "    --> Snapshot due to max accuracy!"; 
-        Snapshot();
+	    LOG(INFO) << "    --> Snapshot due to max accuracy!"; 
+        Snapshot( loss_weight, BestAccuracy );
     }
 
   }
 }
 
 template <typename Dtype>
-void Solver<Dtype>::Snapshot() {
-  CHECK(Caffe::root_solver());
-  string model_filename;
-  switch (param_.snapshot_format()) {
-  case caffe::SolverParameter_SnapshotFormat_BINARYPROTO:
-    model_filename = SnapshotToBinaryProto();
-    break;
-  case caffe::SolverParameter_SnapshotFormat_HDF5:
-    model_filename = SnapshotToHDF5();
-    break;
-  default:
-    LOG(FATAL) << "Unsupported snapshot format.";
-  }
+void Solver<Dtype>::Snapshot( float loss, float accuracy ) 
+{
+    CHECK(Caffe::root_solver());
+    string model_filename;
+    switch (param_.snapshot_format()) 
+    {
+    case caffe::SolverParameter_SnapshotFormat_BINARYPROTO:
+        model_filename = SnapshotToBinaryProto();
+        break;
+    case caffe::SolverParameter_SnapshotFormat_HDF5:
+        model_filename = SnapshotToHDF5();
+        break;
+    default:
+        LOG(FATAL) << "Unsupported snapshot format.";
+    }
 
-  SnapshotSolverState(model_filename);
+    for (int i = 0; i < callbacks_.size(); ++i) 
+    {
+        callbacks_[i]->on_snapshot_saved( iter_, loss, accuracy, model_filename );
+    }
+
+    SnapshotSolverState(model_filename);
 }
 
 template <typename Dtype>
