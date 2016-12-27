@@ -47,7 +47,8 @@ shared_ptr<Layer<Dtype> > GetConvolutionLayer(
     }
   }
 #endif
-  if (engine == ConvolutionParameter_Engine_DEFAULT) {
+  if (engine == ConvolutionParameter_Engine_DEFAULT) 
+  {
     engine = ConvolutionParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
     // Add check for CPU mode, since CuDNN is a compile time dependency,  
@@ -83,11 +84,13 @@ REGISTER_LAYER_CREATOR(Convolution, GetConvolutionLayer);
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetPoolingLayer(const LayerParameter& param) {
   PoolingParameter_Engine engine = param.pooling_param().engine();
-  if (engine == PoolingParameter_Engine_DEFAULT) {
+  if (engine == PoolingParameter_Engine_DEFAULT) 
+  {
     engine = PoolingParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = PoolingParameter_Engine_CUDNN;
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = PoolingParameter_Engine_CUDNN;
     }
 #endif
   }
@@ -129,23 +132,27 @@ template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetLRNLayer(const LayerParameter& param) {
   LRNParameter_Engine engine = param.lrn_param().engine();
 
-  if (engine == LRNParameter_Engine_DEFAULT) {
-#ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = LRNParameter_Engine_CUDNN;
-    }
-#else
+  if (engine == LRNParameter_Engine_DEFAULT) 
+  {
     engine = LRNParameter_Engine_CAFFE;
+#ifdef USE_CUDNN
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = LRNParameter_Engine_CUDNN;
+    }
 #endif
   }
 
   if (engine == LRNParameter_Engine_CAFFE) {
     return shared_ptr<Layer<Dtype> >(new LRNLayer<Dtype>(param));
 #ifdef USE_CUDNN
-  } else if (engine == LRNParameter_Engine_CUDNN) {
+  } 
+  else if (engine == LRNParameter_Engine_CUDNN) 
+  {
     LRNParameter lrn_param = param.lrn_param();
 
-    if (Caffe::mode() == Caffe::CPU) {
+    if (Caffe::mode() == Caffe::CPU) 
+    {
       LOG(INFO) << "CuDNN doesn't support CPU mode for Layer "
                 << param.name() << ". Using Caffe's implementation. ";
       return shared_ptr<Layer<Dtype> >(new LRNLayer<Dtype>(param));
@@ -173,11 +180,13 @@ REGISTER_LAYER_CREATOR(LRN, GetLRNLayer);
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetReLULayer(const LayerParameter& param) {
   ReLUParameter_Engine engine = param.relu_param().engine();
-  if (engine == ReLUParameter_Engine_DEFAULT) {
+  if (engine == ReLUParameter_Engine_DEFAULT) 
+  {
     engine = ReLUParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = ReLUParameter_Engine_CUDNN;
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = ReLUParameter_Engine_CUDNN;
     }
 #endif
   }
@@ -203,11 +212,13 @@ REGISTER_LAYER_CREATOR(ReLU, GetReLULayer);
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetSigmoidLayer(const LayerParameter& param) {
   SigmoidParameter_Engine engine = param.sigmoid_param().engine();
-  if (engine == SigmoidParameter_Engine_DEFAULT) {
+  if (engine == SigmoidParameter_Engine_DEFAULT) 
+  {
     engine = SigmoidParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = SigmoidParameter_Engine_CUDNN;
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = SigmoidParameter_Engine_CUDNN;
     }
 #endif
   }
@@ -234,11 +245,13 @@ REGISTER_LAYER_CREATOR(Sigmoid, GetSigmoidLayer);
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetSoftmaxLayer(const LayerParameter& param) {
   SoftmaxParameter_Engine engine = param.softmax_param().engine();
-  if (engine == SoftmaxParameter_Engine_DEFAULT) {
+  if (engine == SoftmaxParameter_Engine_DEFAULT) 
+  {
     engine = SoftmaxParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = SoftmaxParameter_Engine_CUDNN;
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = SoftmaxParameter_Engine_CUDNN;
     }
 #endif
   }
@@ -264,11 +277,13 @@ REGISTER_LAYER_CREATOR(Softmax, GetSoftmaxLayer);
 template <typename Dtype>
 shared_ptr<Layer<Dtype> > GetTanHLayer(const LayerParameter& param) {
   TanHParameter_Engine engine = param.tanh_param().engine();
-  if (engine == TanHParameter_Engine_DEFAULT) {
+  if (engine == TanHParameter_Engine_DEFAULT) 
+  {
     engine = TanHParameter_Engine_CAFFE;
 #ifdef USE_CUDNN
-    if (Caffe::mode() == Caffe::CPU) {
-    engine = TanHParameter_Engine_CUDNN;
+    if (Caffe::mode() != Caffe::CPU) 
+    {
+        engine = TanHParameter_Engine_CUDNN;
     }
 #endif
   }
