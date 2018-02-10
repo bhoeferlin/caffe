@@ -5,6 +5,11 @@
 
 #include <string>
 
+#if defined(_MSC_VER)
+#	include <direct.h>
+#	define mkdir(X, Y) _mkdir(X)
+#endif
+
 namespace caffe { namespace db {
 
 void LMDB::Open(const string& source, Mode mode) {
